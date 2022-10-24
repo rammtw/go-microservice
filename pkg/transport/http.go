@@ -18,8 +18,50 @@ func NewHTTPHandler(ep endpoints.Set) http.Handler {
 		decodeHTTPServiceStatusRequest,
 		encodeResponse,
 	))
+	m.Handle("/status", httptransport.NewServer(
+		ep.StatusEndpoint,
+		decodeHTTPStatusRequest,
+		encodeResponse,
+	))
+	m.Handle("/addDocument", httptransport.NewServer(
+		ep.AddDocumentEndpoint,
+		decodeHTTPAddDocumentRequest,
+		encodeResponse,
+	))
+	m.Handle("/get", httptransport.NewServer(
+		ep.GetEndpoint,
+		decodeHTTPGetRequest,
+		encodeResponse,
+	))
+	m.Handle("/watermark", httptransport.NewServer(
+		ep.WatermarkEndpoint,
+		decodeHTTPWatermarkRequest,
+		encodeResponse,
+	))
 
 	return m
+}
+
+func decodeHTTPGetRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.GetRequest
+	if r.ContentLength == 0 {
+		logger.Log("Get request with no body")
+		return req, nil
+	}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func decodeHTTPStatusRequest(ctx context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.StatusRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return nil, err
+	}
+	return req, nil
 }
 
 func decodeHTTPWatermarkRequest(_ context.Context, r *http.Request) (interface{}, error) {
